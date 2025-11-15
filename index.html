@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Serviço+ | Guia de Serviços Locais</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #333;
+    }
+
+    header {
+      background: #007bff;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 900px;
+      margin: auto;
+      padding: 20px 0;
+    }
+
+    #search {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    .service-card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .service-card h3 {
+      margin: 0 0 10px 0;
+      color: #007bff;
+    }
+
+    .service-info {
+      margin-bottom: 8px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 8px 12px;
+      margin-right: 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      color: white;
+      font-weight: bold;
+      background: #28a745;
+    }
+
+    .btn.whatsapp { background: #25d366; }
+    .btn.call { background: #007bff; }
+
+  </style>
+</head>
+<body>
+
+<header>Serviço+ | Serviços Locais</header>
+
+<div class="container">
+  <input type="text" id="search" placeholder="Pesquisar por serviço, loja, categoria...">
+
+  <div id="service-list"></div>
+</div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbz2zbZOT7MjP2BRusUq_7IpwcSyITQEO5dN7EGLnnk6qHbIwnLj9yWv6ojDKgrPnq0/exec";
+
+  async function carregarServicos() {
+    try {
+      const resposta = await fetch(API_URL);
+      const dados = await resposta.json();
+      mostrarServicos(dados);
+    } catch (error) {
+      console.error("Erro ao carregar os serviços:", error);
+    }
+  }
+
+  function mostrarServicos(servicos) {
+    const lista = document.getElementById("service-list");
+    lista.innerHTML = "";
+
+    servicos.forEach(s => {
+      const card = document.createElement("div");
+      card.className = "service-card";
+
+      card.innerHTML = `
+        <h3>${s.Nome}</h3>
+        <div class="service-info"><strong>Categoria:</strong> ${s.Categoria}</div>
+        <div class="service-info"><strong>Bairro:</strong> ${s.Bairro}</div>
+        <div class="service-info"><strong>Horário:</strong> ${s.Horario}</div>
+        <div class="service-info"><strong>Descrição:</strong> ${s.Descrição}</div>
+        <a class="btn call" href="tel:${s.Telefone}">Ligar</a>
+        <a class="btn whatsapp" href="https://wa.me/${s.WhatsApp}" target="_blank">WhatsApp</a>
+      `;
+
+      lista.appendChild(card);
+    });
+  }
+
+  document.getElementById("search").addEventListener("input", function() {
+    const termo = this.value.toLowerCase();
+    const cards = document.querySelectorAll(".service-card");
+
+    cards.forEach(card => {
+      const texto = card.innerText.toLowerCase();
+      card.style.display = texto.includes(termo) ? "block" : "none";
+    });
+  });
+
+  carregarServicos();
+</script>
+</body>
+</html>
