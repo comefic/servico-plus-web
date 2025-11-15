@@ -2,130 +2,108 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <title>Serviço+ | Guia de Serviços Locais</title>
   <style>
+   
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      color: #333;
-    }
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: #f2f5fa;
+  color: #333;
+}
 
-    header {
-      background: #007bff;
-      color: #fff;
-      padding: 20px;
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-    }
+/* Cabeçalho moderno */
+header {
+  background: linear-gradient(90deg, #007bff, #005fcc);
+  color: #fff;
+  padding: 25px 15px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
 
-    .container {
-      width: 90%;
-      max-width: 900px;
-      margin: auto;
-      padding: 20px 0;
-    }
+/* Container melhorado */
+.container {
+  width: 92%;
+  max-width: 900px;
+  margin: auto;
+  padding: 25px 0;
+}
 
-    #search {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-      font-size: 16px;
-    }
+/* Barra de pesquisa */
+#search {
+  width: 100%;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  margin-bottom: 22px;
+  font-size: 16px;
+  transition: all 0.25s ease;
+  background: #fff;
+}
 
-    .service-card {
-      background: #fff;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
+#search:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0,123,255,0.4);
+}
 
-    .service-card h3 {
-      margin: 0 0 10px 0;
-      color: #007bff;
-    }
+/* Cartão do serviço */
+.service-card {
+  background: #fff;
+  padding: 20px;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-    .service-info {
-      margin-bottom: 8px;
-    }
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
 
-    .btn {
-      display: inline-block;
-      padding: 8px 12px;
-      margin-right: 10px;
-      border-radius: 6px;
-      text-decoration: none;
-      color: white;
-      font-weight: bold;
-      background: #28a745;
-    }
+/* Nome do serviço */
+.service-card h3 {
+  margin: 0 0 12px 0;
+  color: #005fcc;
+  font-size: 20px;
+}
 
-    .btn.whatsapp { background: #25d366; }
-    .btn.call { background: #007bff; }
+/* Info */
+.service-info {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
 
-  </style>
-</head>
-<body>
+/* Botões */
+.btn {
+  display: inline-block;
+  padding: 10px 14px;
+  margin-right: 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
 
-<header>Serviço+ | Serviços Locais</header>
+.btn.call {
+  background: #007bff;
+}
 
-<div class="container">
-  <input type="text" id="search" placeholder="Pesquisar por serviço, loja, categoria...">
+.btn.call:hover {
+  background: #005fcc;
+}
 
-  <div id="service-list"></div>
-</div>
+.btn.whatsapp {
+  background: #25d366;
+}
 
-<script>
-  const API_URL = "https://script.google.com/macros/s/AKfycbz2zbZOT7MjP2BRusUq_7IpwcSyITQEO5dN7EGLnnk6qHbIwnLj9yWv6ojDKgrPnq0/exec";
-
-  async function carregarServicos() {
-    try {
-      const resposta = await fetch(API_URL);
-      const dados = await resposta.json();
-      mostrarServicos(dados);
-    } catch (error) {
-      console.error("Erro ao carregar os serviços:", error);
-    }
-  }
-
-  function mostrarServicos(servicos) {
-    const lista = document.getElementById("service-list");
-    lista.innerHTML = "";
-
-    servicos.forEach(s => {
-      const card = document.createElement("div");
-      card.className = "service-card";
-
-      card.innerHTML = `
-        <h3>${s.Nome}</h3>
-        <div class="service-info"><strong>Categoria:</strong> ${s.Categoria}</div>
-        <div class="service-info"><strong>Bairro:</strong> ${s.Bairro}</div>
-        <div class="service-info"><strong>Horário:</strong> ${s.Horario}</div>
-        <div class="service-info"><strong>Descrição:</strong> ${s.Descrição}</div>
-        <a class="btn call" href="tel:${s.Telefone}">Ligar</a>
-        <a class="btn whatsapp" href="https://wa.me/${s.WhatsApp}" target="_blank">WhatsApp</a>
-      `;
-
-      lista.appendChild(card);
-    });
-  }
-
-  document.getElementById("search").addEventListener("input", function() {
-    const termo = this.value.toLowerCase();
-    const cards = document.querySelectorAll(".service-card");
-
-    cards.forEach(card => {
-      const texto = card.innerText.toLowerCase();
-      card.style.display = texto.includes(termo) ? "block" : "none";
-    });
-  });
-
-  carregarServicos();
-</script>
-</body>
-</html>
+.btn.whatsapp:hover {
+  background: #1ebe5d;
+}
