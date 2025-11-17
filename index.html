@@ -59,7 +59,7 @@
   </div>
 
   <div id="resultsArea" class="grid" aria-live="polite"></div>
-  <div id="emptyNotice" class="notice">Digite acima o que procura (ex: "Restaurante", "Farmácia", "Maputo") e clique em Pesquisar.</div>
+  <div id="emptyNotice" class="notice">Digite acima o que procura (ex: "Restaurante", "Farmácia", "Canalizadores") e clique em Pesquisar.</div>
   <div id="loadingNotice" class="notice" style="display:none">Carregando...</div>
 </main>
 
@@ -114,7 +114,7 @@
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyLQBDvS_GlbCm4rMotr7uX4UQH3UO4TTAgawD8Dp-jv88Jy5D_v69eXE-xPS-vuQVm/exec";
+const API_URL = "const API_URL = "https://script.google.com/macros/s/AKfycbxgCoT3wuGM82z7i4iypCne2OW1TvPYqVLtk_DCBwbbkMumyBDGkgDrba9HyTh5Mc6I/exec";
 
 // Função de escape para segurança
 function esc(s){ 
@@ -133,7 +133,7 @@ function showLoading(show) {
 async function fetchAll(){ 
   showLoading(true);
   try{ 
-    const r = await fetch(API_URL); // GET por padrão
+    const r = await fetch(API_URL);
     if(!r.ok) throw new Error('HTTP '+r.status); 
     const data = await r.json(); 
     return data || []; 
@@ -145,136 +145,66 @@ async function fetchAll(){
   }
 }
 
-// Enviar dados (POST)
+// ENVIO SIMPLIFICADO - Vamos testar diferentes abordagens
 async function submitData(payload) {
+  const msg = document.getElementById('formMsg');
+  
   try {
-    const r = await fetch(API_URL, { 
-      method: 'POST', 
-      headers: {'Content-Type': 'application/json'}, 
-      body: JSON.stringify(payload) 
-    }); 
+    // Método 1: FormData (mais compatível com Apps Script)
+    const formData = new FormData();
     
-    if(!r.ok) throw new Error('HTTP '+r.status); 
-    const j = await r.json(); 
-    return { success: true, data: j };
-  } catch(e) {
-    console.error('submit error', e);
-    return { success: false, error: e.message };
+    // Adicionar todos os campos ao FormData
+    Object.keys(payload).forEach(key => {
+      if (payload[key]) {
+        formData.append(key, payload[key]);
+      }
+    });
+
+    // Tentar com FormData primeiro
+    console.log('Tentando enviar com FormData:', payload);
+    
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: formData // Não setar Content-Type para FormData
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const result = await response.json();
+    console.log('Resposta do servidor:', result);
+    
+    return { success: true, data: result };
+    
+  } catch (error) {
+    console.error('Erro no envio:', error);
+    
+    // Método 2: Tentar com JSON
+    try {
+      console.log('Tentando com JSON...');
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const result = await response.json();
+      return { success: true, data: result };
+      
+    } catch (jsonError) {
+      console.error('Erro com JSON também:', jsonError);
+      return { success: false, error: 'Falha em ambos os métodos' };
+    }
   }
 }
 
-// Renderizar serviços
-function renderServices(services) {
-  const resultsArea = document.getElementById('resultsArea');
-  const emptyNotice = document.getElementById('emptyNotice');
-  
-  if (!services || services.length === 0) {
-    resultsArea.innerHTML = '';
-    emptyNotice.textContent = 'Nenhum resultado encontrado. Tente outra pesquisa.';
-    emptyNotice.style.display = 'block';
-    return;
-  }
-  
-  emptyNotice.style.display = 'none';
-  
-  resultsArea.innerHTML = services.map(service => `
-    <div class="card">
-      ${service.Foto_URL ? `<img src="${esc(service.Foto_URL)}" alt="${esc(service.Nome)}" class="service-img" onerror="this.style.display='none'">` : ''}
-      <h3>${esc(service.Nome)}</h3>
-      <div class="meta">${esc(service.Categoria)} · ${esc(service['Localização'] || 'Local não informado')}</div>
-      <div class="contact-info">
-        <strong>📞 Contacto:</strong> ${esc(service.Contacto || 'Não informado')}
-        ${service.WhatsApp ? `<br><strong>💬 WhatsApp:</strong> ${esc(service.WhatsApp)}` : ''}
-      </div>
-      <div style="margin:8px 0">${esc(service.Descrição || 'Sem descrição')}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <a class="pill primary" href="tel:${esc(service.Contacto||'')}" onclick="event.stopPropagation()">📞 Ligar</a>
-        ${service.WhatsApp ? `<a class="pill" href="https://wa.me/${esc(service.WhatsApp)}" target="_blank" onclick="event.stopPropagation()">💬 WhatsApp</a>` : ''}
-      </div>
-    </div>
-  `).join('');
-}
+// Restante do seu código permanece igual...
+// Renderizar serviços, searchAndRender, etc.
 
-// Pesquisar e renderizar
-async function searchAndRender(){ 
-  const q = document.getElementById('q').value.trim().toLowerCase(); 
-  const resultsArea = document.getElementById('resultsArea'); 
-  const emptyNotice = document.getElementById('emptyNotice');
-  
-  resultsArea.innerHTML = ''; 
-  
-  if(!q){ 
-    emptyNotice.textContent = 'Digite acima o que procura (ex: "Restaurante", "Farmácia", "Maputo") e clique em Pesquisar.'; 
-    emptyNotice.style.display = 'block'; 
-    return; 
-  } 
-  
-  const all = await fetchAll(); 
-  if(all === null){ 
-    resultsArea.innerHTML = '<div class="card error">Erro ao conectar com a API. Verifique a configuração.</div>'; 
-    return; 
-  } 
-  
-  const filtered = all.filter(item => { 
-    return (item.Nome||'').toString().toLowerCase().includes(q) || 
-           (item.Categoria||'').toString().toLowerCase().includes(q) || 
-           (item['Localização']||'').toString().toLowerCase().includes(q); 
-  }); 
-  
-  renderServices(filtered);
-}
-
-// Função para pesquisar por categoria (agora clicável)
-function searchByCategory(category) {
-  document.getElementById('q').value = category;
-  searchAndRender();
-}
-
-// Mostrar todas as categorias disponíveis
-async function showCategories() {
-  const all = await fetchAll(); 
-  if(all === null){ 
-    document.getElementById('resultsArea').innerHTML = '<div class="card error">Erro ao conectar API.</div>'; 
-    return; 
-  } 
-  
-  const cats = [...new Set(all.map(x => x.Categoria || 'Outros'))].sort();
-  const emptyNotice = document.getElementById('emptyNotice');
-  emptyNotice.style.display = 'none';
-  
-  document.getElementById('resultsArea').innerHTML = cats.map(c => `
-    <div class="card clickable" onclick="searchByCategory('${esc(c)}')">
-      <strong>${esc(c)}</strong>
-      <div class="meta">${all.filter(x => (x.Categoria || 'Outros') === c).length} serviços</div>
-      <div style="margin-top:8px;color:var(--accent);font-size:13px">Clique para ver todos os serviços de ${esc(c)}</div>
-    </div>
-  `).join(''); 
-}
-
-// Modal functions
-const modal = document.getElementById('modal'); 
-
-document.getElementById('addBtn').addEventListener('click', () => { 
-  // Limpar formulário
-  document.getElementById('nome').value = '';
-  document.getElementById('categoria').value = '';
-  document.getElementById('localizacao').value = '';
-  document.getElementById('contacto').value = '';
-  document.getElementById('whatsapp').value = '';
-  document.getElementById('descricao').value = '';
-  document.getElementById('foto_url').value = '';
-  document.getElementById('formMsg').style.display = 'none';
-  
-  modal.classList.add('show'); 
-  modal.setAttribute('aria-hidden','false'); 
-}); 
-
-document.getElementById('cancelBtn').addEventListener('click', () => { 
-  modal.classList.remove('show'); 
-  modal.setAttribute('aria-hidden','true'); 
-  document.getElementById('formMsg').style.display = 'none'; 
-}); 
-
+// ATUALIZAR A PARTE DO SUBMIT BTN
 document.getElementById('submitBtn').addEventListener('click', async () => { 
   const nome = document.getElementById('nome').value.trim(); 
   const categoria = document.getElementById('categoria').value.trim(); 
@@ -286,67 +216,41 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   const msg = document.getElementById('formMsg'); 
   
   // Validações
-  if(!nome){ 
+  if(!nome || !categoria || !contacto){ 
     msg.style.display='block'; 
-    msg.textContent='Por favor preencha o Nome.'; 
+    msg.textContent='Por favor preencha Nome, Categoria e Contacto.'; 
     msg.className = 'notice error';
     return; 
-  } 
-  
-  if(!categoria){ 
-    msg.style.display='block'; 
-    msg.textContent='Por favor selecione uma Categoria.'; 
-    msg.className = 'notice error';
-    return; 
-  }
-  
-  if(!contacto){ 
-    msg.style.display='block'; 
-    msg.textContent='Por favor preencha o Contacto.'; 
-    msg.className = 'notice error';
-    return; 
-  }
-  
-  // Validar WhatsApp (se preenchido)
-  if(whatsapp && !/^\d+$/.test(whatsapp)) {
-    msg.style.display='block'; 
-    msg.textContent='WhatsApp deve conter apenas números.'; 
-    msg.className = 'notice error';
-    return;
   }
   
   msg.style.display='block'; 
   msg.textContent='Enviando...'; 
   msg.className = 'notice';
   
-  // Preparar payload - TESTAR AMBOS OS FORMATOS
-  const payload1 = { 
-    Nome: nome, 
-    Categoria: categoria, 
-    Localização: localizacao, 
-    Contacto: contacto, 
-    Descrição: descricao, 
-    WhatsApp: whatsapp, 
-    Foto_URL: foto_url 
-  };
-
-  const payload2 = { 
-    nome: nome, 
-    categoria: categoria, 
-    localizacao: localizacao, 
-    contacto: contacto, 
-    descricao: descricao, 
-    whatsapp: whatsapp, 
-    foto_url: foto_url 
+  // Preparar payload - TESTAR DIFERENTES FORMATOS
+  const payload = {
+    // Tentar com nomes em português (como na planilha)
+    'Nome': nome,
+    'Categoria': categoria, 
+    'Localização': localizacao,
+    'Contacto': contacto,
+    'WhatsApp': whatsapp,
+    'Descrição': descricao,
+    'Foto_URL': foto_url,
+    
+    // Também incluir em minúsculas para garantir
+    'nome': nome,
+    'categoria': categoria,
+    'localizacao': localizacao,
+    'contacto': contacto,
+    'whatsapp': whatsapp,
+    'descricao': descricao,
+    'foto_url': foto_url
   };
   
-  // Tentar primeiro com maiúsculas, depois com minúsculas
-  let result = await submitData(payload1);
+  console.log('Payload sendo enviado:', payload);
   
-  if (!result.success) {
-    // Se falhar, tentar com minúsculas
-    result = await submitData(payload2);
-  }
+  const result = await submitData(payload);
   
   if (result.success) {
     msg.textContent = '✅ Enviado com sucesso!'; 
@@ -364,43 +268,178 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     setTimeout(() => { 
       modal.classList.remove('show'); 
       msg.style.display = 'none'; 
+      // Recarregar os dados
+      if (document.getElementById('q').value) {
+        searchAndRender();
+      }
     }, 2000); 
   } else {
-    msg.innerHTML = '❌ Falha ao enviar. Verifique a conexão e tente novamente.'; 
+    msg.innerHTML = '❌ Falha ao enviar. <br><small>Verifique o console (F12) para detalhes.</small>'; 
     msg.className = 'notice error';
   }
-}); 
+});
+</script>";
 
-// Event Listeners
-document.getElementById('searchBtn').addEventListener('click', searchAndRender); 
-document.getElementById('q').addEventListener('keydown', function(e){ 
-  if(e.key === 'Enter') searchAndRender(); 
-}); 
+// Função de escape para segurança
+function esc(s){ 
+  if(!s) return ''; 
+  return String(s).replace(/[&<>"']/g, function(m){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];
+  }); 
+}
 
-document.getElementById('clearBtn').addEventListener('click', () => { 
-  document.getElementById('resultsArea').innerHTML = ''; 
-  document.getElementById('q').value = ''; 
-  document.getElementById('emptyNotice').textContent = 'Digite acima o que procura (ex: "Restaurante", "Farmácia", "Maputo") e clique em Pesquisar.';
-  document.getElementById('emptyNotice').style.display = 'block'; 
-}); 
+// Mostrar loading
+function showLoading(show) {
+  document.getElementById('loadingNotice').style.display = show ? 'block' : 'none';
+}
 
-document.getElementById('catsBtn').addEventListener('click', showCategories);
-
-document.getElementById('testBtn').addEventListener('click', async () => { 
+// Buscar todos os dados da API (GET)
+async function fetchAll(){ 
+  showLoading(true);
   try{ 
-    const r = await fetch(API_URL); 
-    if(r.ok) {
-      const data = await r.json();
-      alert(`✅ API GET funcionando!\nEncontrados ${data.length} registros.`); 
-    } else {
-      alert('❌ API retornou status '+r.status); 
-    }
+    const r = await fetch(API_URL);
+    if(!r.ok) throw new Error('HTTP '+r.status); 
+    const data = await r.json(); 
+    return data || []; 
   }catch(e){ 
-    alert('❌ Erro ao conectar com API: ' + e.message); 
-  } 
-}); 
+    console.error('fetchAll error',e); 
+    return null; 
+  } finally {
+    showLoading(false);
+  }
+}
 
-// Não carrega automaticamente - só após pesquisa
+// ENVIO SIMPLIFICADO - Vamos testar diferentes abordagens
+async function submitData(payload) {
+  const msg = document.getElementById('formMsg');
+  
+  try {
+    // Método 1: FormData (mais compatível com Apps Script)
+    const formData = new FormData();
+    
+    // Adicionar todos os campos ao FormData
+    Object.keys(payload).forEach(key => {
+      if (payload[key]) {
+        formData.append(key, payload[key]);
+      }
+    });
+
+    // Tentar com FormData primeiro
+    console.log('Tentando enviar com FormData:', payload);
+    
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      body: formData // Não setar Content-Type para FormData
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    
+    const result = await response.json();
+    console.log('Resposta do servidor:', result);
+    
+    return { success: true, data: result };
+    
+  } catch (error) {
+    console.error('Erro no envio:', error);
+    
+    // Método 2: Tentar com JSON
+    try {
+      console.log('Tentando com JSON...');
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const result = await response.json();
+      return { success: true, data: result };
+      
+    } catch (jsonError) {
+      console.error('Erro com JSON também:', jsonError);
+      return { success: false, error: 'Falha em ambos os métodos' };
+    }
+  }
+}
+
+// Restante do seu código permanece igual...
+// Renderizar serviços, searchAndRender, etc.
+
+// ATUALIZAR A PARTE DO SUBMIT BTN
+document.getElementById('submitBtn').addEventListener('click', async () => { 
+  const nome = document.getElementById('nome').value.trim(); 
+  const categoria = document.getElementById('categoria').value.trim(); 
+  const localizacao = document.getElementById('localizacao').value.trim(); 
+  const contacto = document.getElementById('contacto').value.trim(); 
+  const whatsapp = document.getElementById('whatsapp').value.trim(); 
+  const descricao = document.getElementById('descricao').value.trim(); 
+  const foto_url = document.getElementById('foto_url').value.trim(); 
+  const msg = document.getElementById('formMsg'); 
+  
+  // Validações
+  if(!nome || !categoria || !contacto){ 
+    msg.style.display='block'; 
+    msg.textContent='Por favor preencha Nome, Categoria e Contacto.'; 
+    msg.className = 'notice error';
+    return; 
+  }
+  
+  msg.style.display='block'; 
+  msg.textContent='Enviando...'; 
+  msg.className = 'notice';
+  
+  // Preparar payload - TESTAR DIFERENTES FORMATOS
+  const payload = {
+    // Tentar com nomes em português (como na planilha)
+    'Nome': nome,
+    'Categoria': categoria, 
+    'Localização': localizacao,
+    'Contacto': contacto,
+    'WhatsApp': whatsapp,
+    'Descrição': descricao,
+    'Foto_URL': foto_url,
+    
+    // Também incluir em minúsculas para garantir
+    'nome': nome,
+    'categoria': categoria,
+    'localizacao': localizacao,
+    'contacto': contacto,
+    'whatsapp': whatsapp,
+    'descricao': descricao,
+    'foto_url': foto_url
+  };
+  
+  console.log('Payload sendo enviado:', payload);
+  
+  const result = await submitData(payload);
+  
+  if (result.success) {
+    msg.textContent = '✅ Enviado com sucesso!'; 
+    msg.className = 'notice success';
+    
+    // Limpar formulário após sucesso
+    document.getElementById('nome').value = '';
+    document.getElementById('categoria').value = '';
+    document.getElementById('localizacao').value = '';
+    document.getElementById('contacto').value = '';
+    document.getElementById('whatsapp').value = '';
+    document.getElementById('descricao').value = '';
+    document.getElementById('foto_url').value = '';
+    
+    setTimeout(() => { 
+      modal.classList.remove('show'); 
+      msg.style.display = 'none'; 
+      // Recarregar os dados
+      if (document.getElementById('q').value) {
+        searchAndRender();
+      }
+    }, 2000); 
+  } else {
+    msg.innerHTML = '❌ Falha ao enviar. <br><small>Verifique o console (F12) para detalhes.</small>'; 
+    msg.className = 'notice error';
+  }
+});
 </script>
-</body>
-</html>
