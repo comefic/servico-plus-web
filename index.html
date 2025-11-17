@@ -138,117 +138,55 @@
   </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyRjABs9TBIc-FaiYCcy6O59rsd9ZuVdlOm_Nf90cd1n9BVeTBOeFv1sCSFjF0nq-pm/exec";
-const SUBMIT_URL = API_URL; // apps script should implement doPost to accept submissions
+// URL do Apps Script
+const API_URL = "COLOCA_AQUI_O_TESEU_ENDPOINT"; 
 
-async function fetchServices(){
-  try{
-    const res = await fetch(API_URL);
-    if(!res.ok) throw new Error('Erro ao buscar');
-    const data = await res.json();
-    window.services = data;
-    renderList(data);
-  }catch(e){
-    console.error(e);
-    document.getElementById('results').innerHTML = '<div class="notice">Não foi possível carregar serviços. Verifica a tua API.</div>';
-  }
-}
-
-function renderList(list){
-  const container = document.getElementById('results');
-  container.innerHTML = '';
-  if(!list || list.length===0){ document.getElementById('empty').style.display='block'; return;}
-  document.getElementById('empty').style.display='none';
-  list.forEach(s=>{
-    const el = document.createElement('div');
-    el.className='card';
-    const nome = s.Nome || s.name || 'Sem nome';
-    const cat = s.Categoria || s.categoria || '';
-    const bairro = s.Bairro || s.bairro || '';
-    const telefone = s.Telefone || s.telefone || '';
-    const whatsapp = s.WhatsApp || s.whatsapp || '';
-    const horario = s.Horario || s.horario || '';
-    const desc = s.Descrição || s.descricao || '';
-
-    el.innerHTML = `<h3>${escapeHtml(nome)}</h3>
-      <div class="meta">${escapeHtml(cat)} · ${escapeHtml(bairro)}</div>
-      <div class="small">${escapeHtml(desc)}</div>
-      <div class="actions">
-        <a class="pill" href="tel:${telefone}">Ligar</a>
-        <a class="pill" href="https://wa.me/${whatsapp}" target="_blank">WhatsApp</a>
-        <span class="pill">${escapeHtml(horario)}</span>
-      </div>`;
-    container.appendChild(el);
-  });
-}
-
-function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }
-
-// Search
-document.getElementById('q').addEventListener('input', function(){
-  const v = this.value.trim().toLowerCase();
-  if(!v){ renderList(window.services || []); return; }
-  const filtered = (window.services||[]).filter(s=>{
-    return (s.Nome||'').toLowerCase().includes(v) ||
-           (s.Categoria||'').toLowerCase().includes(v) ||
-           (s.Bairro||'').toLowerCase().includes(v) ||
-           (s.Descrição||'').toLowerCase().includes(v);
-  });
-  renderList(filtered);
+// 🔥 NÃO CARREGAR AUTOMATICAMENTE
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById("resultados").innerHTML = "";
 });
 
-// Modal controls
-const modal = document.getElementById('modal');
-document.getElementById('addBtn').addEventListener('click', ()=>{ modal.classList.add('show'); modal.setAttribute('aria-hidden','false');});
-document.getElementById('cancelBtn').addEventListener('click', ()=>{ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); });
+// Função de pesquisa
+async function pesquisarServico() {
+    const termo = document.getElementById("search").value.trim().toLowerCase();
+    const resultadosDiv = document.getElementById("resultados");
 
-// Form submit
-document.getElementById('submitBtn').addEventListener('click', async ()=>{
-  const nome = document.getElementById('nome').value.trim();
-  const categoria = document.getElementById('categoria').value.trim();
-  const telefone = document.getElementById('telefone').value.trim();
-  const whatsapp = document.getElementById('whatsapp').value.trim();
-  const bairro = document.getElementById('bairro').value.trim();
-  const obs = document.getElementById('obs').value.trim();
-  const msgEl = document.getElementById('formMsg');
-  if(!nome || !telefone){ msgEl.style.display='block'; msgEl.textContent='Por favor preencha pelo menos o nome e telefone.'; return; }
-  msgEl.style.display='block'; msgEl.textContent='Enviando...';
-
-  const payload = {
-    Nome: nome,
-    Categoria: categoria,
-    Telefone: telefone,
-    WhatsApp: whatsapp,
-    Bairro: bairro,
-    Horario: obs
-  };
-
-  try{
-    const res = await fetch(SUBMIT_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    if(res.ok){
-      msgEl.textContent='Obrigado! Submissão recebida.';
-      setTimeout(()=>{ modal.classList.remove('show'); msgEl.style.display='none'; },1200);
-      // refresh list
-      setTimeout(fetchServices,1200);
-    } else {
-      const text = await res.text();
-      throw new Error('Resposta não-ok: '+text);
+    if (!termo) {
+        resultadosDiv.innerHTML = "<p class='alert'>Digite algo para pesquisar.</p>";
+        return;
     }
-  }catch(err){
-    console.error(err);
-    msgEl.innerHTML='Falha ao enviar diretamente. <br>Abre o WhatsApp para enviar?';
-    // fallback: open WhatsApp with prefilled message
-    const waMsg = encodeURIComponent(`Olá, quero submeter um serviço:\nNome: ${nome}\nCategoria: ${categoria}\nTel: ${telefone}\nWhatsApp: ${whatsapp}\nBairro: ${bairro}\nObs: ${obs}`);
-    const waUrl = 'https://wa.me/258848888888?text='+waMsg; // replace with your contact
-    setTimeout(()=>{ if(confirm('Enviar via WhatsApp?')) window.open(waUrl,'_blank'); },200);
-  }
-});
 
-fetchServices();
+    resultadosDiv.innerHTML = "<p>A pesquisar...</p>";
+
+    try {
+        const resp = await fetch(API_URL);
+        const dados = await resp.json();
+
+        const filtrados = dados.filter(item =>
+            (item.Nome?.toLowerCase().includes(termo) ||
+             item.Categoria?.toLowerCase().includes(termo) ||
+             item.Localizacao?.toLowerCase().includes(termo))
+        );
+
+        if (filtrados.length === 0) {
+            resultadosDiv.innerHTML = "<p class='alert'>Nenhum resultado encontrado.</p>";
+            return;
+        }
+
+        resultadosDiv.innerHTML = filtrados.map(emp => `
+            <div class="card">
+                <h3>${emp.Nome}</h3>
+                <p><strong>Categoria:</strong> ${emp.Categoria}</p>
+                <p><strong>Localização:</strong> ${emp.Localizacao}</p>
+                <p><strong>Contacto:</strong> ${emp.Contacto}</p>
+                <p><strong>WhatsApp:</strong> ${emp.WhatsApp}</p>
+            </div>
+        `).join("");
+
+    } catch (erro) {
+        resultadosDiv.innerHTML = "<p class='alert'>Erro ao ligar ao servidor.</p>";
+    }
+}
 </script>
 </body>
 </html>
