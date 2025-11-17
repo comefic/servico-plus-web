@@ -1,192 +1,70 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Serviço+ — Guia de Serviços Locais</title>
-  <link rel="icon" href="logo.png" />
-  <style>
-    :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --accent:#00a3ff;
-      --muted:#94a3b8;
-      --glass: rgba(255,255,255,0.03);
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background:linear-gradient(180deg,#071020 0%, #0b1522 100%);
-      color:#e6eef8;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      min-height:100vh;
-    }
-    header{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      padding:18px 20px;
-      border-bottom:1px solid rgba(255,255,255,0.03);
-      background: linear-gradient(90deg, rgba(0,0,0,0.25), transparent);
-    }
-    header img{width:44px;height:44px;border-radius:8px;object-fit:cover}
-    header h1{font-size:18px;margin:0}
-    .wrap{max-width:980px;margin:28px auto;padding:0 16px}
-    .searchbar{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      margin-bottom:18px;
-    }
-    .search{
-      flex:1;
-      display:flex;
-      background:var(--card);
-      border-radius:12px;
-      padding:12px;
-      gap:10px;
-      border:1px solid rgba(255,255,255,0.03);
-    }
-    .search input{
-      background:transparent;border:0;outline:none;color:inherit;font-size:15px;width:100%;
-    }
-    .btn{
-      background:var(--accent);color:#05202b;border:0;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;
-      box-shadow:0 6px 18px rgba(0,163,255,0.12);
-    }
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);font-weight:600}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);
-    }
-    .card h3{margin:0 0 8px 0;color:var(--accent);font-size:16px}
-    .meta{font-size:13px;color:var(--muted);margin-bottom:8px}
-    .actions{display:flex;gap:8px;margin-top:10px}
-    .pill{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02);font-size:12px;color:var(--muted)}
-    footer{max-width:980px;margin:26px auto;padding:16px;color:var(--muted);text-align:center}
-    /* modal */
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.85))}
-    .modal.show{display:flex}
-    .modal-card{width:100%;max-width:720px;background:linear-gradient(180deg,#071427, #061527);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04)}
-    label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
-    input[type=text], select, textarea{width:100%;padding:10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit;margin-top:6px}
-    textarea{min-height:90px;resize:vertical}
-    .row{display:flex;gap:10px}
-    @media(max-width:640px){header h1{font-size:16px}.row{flex-direction:column}}
-    .notice{margin-top:10px;font-size:13px;color:#9ad3ff}
-    .small{font-size:13px;color:var(--muted)}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serviço+ Web v3</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f2f2f2; }
+header { background: #0077ff; color: #fff; padding: 20px; text-align: center; font-size: 24px; }
+.container { width: 90%; max-width: 900px; margin: auto; padding: 20px; }
+.search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+input { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid #aaa; }
+button { padding: 12px 18px; background: #0077ff; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+button:hover { background: #005fd4; }
+.card { background: #fff; padding: 15px; margin-top: 15px; border-radius: 8px; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
+.actions { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+.actions button { flex: 1; min-width: 150px; }
+.alert { color: red; margin-top: 10px; }
+</style>
 </head>
 <body>
-  <header>
-    <img src="logo.png" alt="Serviço+ logo">
-    <div>
-      <h1>Serviço+ <span class="small">Guia colaborativo de serviços locais</span></h1>
-    </div>
-  </header>
+<header>Serviço+ Web v3</header>
 
-  <main class="wrap">
-    <div class="searchbar">
-      <div class="search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="opacity:0.8"><path d="M21 21l-4.35-4.35" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <input id="q" placeholder="Pesquisar lojas, serviços ou bairro..." />
-      </div>
-      <button class="btn" id="addBtn">Adicionar Serviço</button>
-    </div>
 
-    <div id="results" class="grid" aria-live="polite"></div>
+<div class="container">
 
-    <div id="empty" class="notice" style="display:none">Nenhum resultado. Tenta outra palavra — ou adiciona um novo serviço.</div>
-  </main>
 
-  <footer>Serviço+ • Base de dados colaborativa — feito com ferramentas grátis</footer>
+<div class="search-box">
+<input id="search" placeholder="Pesquisar serviços, lojas, oficinas, médicos...">
+<button onclick="pesquisarServico()">Pesquisar</button>
+</div>
 
-  <!-- Modal -->
-  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal-card">
-      <h2>Adicionar novo serviço</h2>
-      <p class="small">Preencha os dados. A submissão será enviada para a tua folha Google (via Apps Script).</p>
 
-      <label>Nome do local<input type="text" id="nome"></label>
-      <div class="row">
-        <label style="flex:1">Categoria
-          <select id="categoria">
-            <option>Óptica</option>
-            <option>Farmácia</option>
-            <option>Restaurante</option>
-            <option>Oficina</option>
-            <option>Serviços</option>
-            <option>Outro</option>
-          </select>
-        </label>
-        <label style="flex:1">Telefone<input type="text" id="telefone" placeholder="ex: 84xxxxxxx"></label>
-      </div>
-      <label>WhatsApp (apenas números)<input type="text" id="whatsapp" placeholder="848888888"></label>
-      <label>Bairro / Endereço<input type="text" id="bairro" placeholder="Nacala Porto, Cidade..."></label>
-      <label>Horário / Observações<textarea id="obs" placeholder="Ex: 08:00–17:00"></textarea></label>
+<div class="actions">
+<button onclick="mostrarFormulario()">➕ Adicionar Empresa</button>
+<button onclick="listarCategorias()">📂 Ver Categorias</button>
+<button onclick="limparResultados()">🧹 Limpar Tela</button>
+<button onclick="testarAPI()">🔌 Testar Conexão</button>
+</div>
 
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="btn" id="submitBtn">Enviar</button>
-        <button class="btn ghost" id="cancelBtn">Cancelar</button>
-      </div>
 
-      <p id="formMsg" class="notice" style="display:none"></p>
-    </div>
-  </div>
+<div id="formulario" class="card" style="display:none;"></div>
+
+
+<div id="resultados"></div>
+</div>
+
 
 <script>
-// URL do Apps Script
-const API_URL = "COLOCA_AQUI_O_TESEU_ENDPOINT"; 
+const API_GET = "COLOCAR_LINK_DO_GET_AQUI";
+const API_POST = "COLOCAR_LINK_DO_POST_AQUI";
 
-// 🔥 NÃO CARREGAR AUTOMATICAMENTE
-window.addEventListener('DOMContentLoaded', () => {
-    document.getElementById("resultados").innerHTML = "";
+
+window.addEventListener("DOMContentLoaded", () => {
+document.getElementById("resultados").innerHTML = "";
 });
 
-// Função de pesquisa
-async function pesquisarServico() {
-    const termo = document.getElementById("search").value.trim().toLowerCase();
-    const resultadosDiv = document.getElementById("resultados");
 
-    if (!termo) {
-        resultadosDiv.innerHTML = "<p class='alert'>Digite algo para pesquisar.</p>";
-        return;
-    }
-
-    resultadosDiv.innerHTML = "<p>A pesquisar...</p>";
-
-    try {
-        const resp = await fetch(API_URL);
-        const dados = await resp.json();
-
-        const filtrados = dados.filter(item =>
-            (item.Nome?.toLowerCase().includes(termo) ||
-             item.Categoria?.toLowerCase().includes(termo) ||
-             item.Localizacao?.toLowerCase().includes(termo))
-        );
-
-        if (filtrados.length === 0) {
-            resultadosDiv.innerHTML = "<p class='alert'>Nenhum resultado encontrado.</p>";
-            return;
-        }
-
-        resultadosDiv.innerHTML = filtrados.map(emp => `
-            <div class="card">
-                <h3>${emp.Nome}</h3>
-                <p><strong>Categoria:</strong> ${emp.Categoria}</p>
-                <p><strong>Localização:</strong> ${emp.Localizacao}</p>
-                <p><strong>Contacto:</strong> ${emp.Contacto}</p>
-                <p><strong>WhatsApp:</strong> ${emp.WhatsApp}</p>
-            </div>
-        `).join("");
-
-    } catch (erro) {
-        resultadosDiv.innerHTML = "<p class='alert'>Erro ao ligar ao servidor.</p>";
-    }
-}
-</script>
-</body>
-</html>
+function mostrarFormulario() {
+document.getElementById("formulario").style.display = "block";
+document.getElementById("formulario").innerHTML = `
+<h3>Adicionar Empresa</h3>
+<input id='nome' placeholder='Nome da Empresa'><br><br>
+<input id='categoria' placeholder='Categoria (ex: Óptica, Farmácia, Mercado)'><br><br>
+<input id='localizacao' placeholder='Localização'><br><br>
+<input id='contacto' placeholder='Contacto'><br><br>
+<input id='whatsapp' placeholder='WhatsApp'><br><br>
+<input id='foto' placeholder='URL da Foto (opcional)'><br><br>
+<button onclick='enviarEmpresa()'>Salvar</button>
+`;
