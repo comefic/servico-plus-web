@@ -1,0 +1,1 @@
+Servico Plus Web v3 - README\n\nConteudo: index.html (v3)\nInstrucoes na primeira linha do ficheiro para garantir API_URL correta.
