@@ -18,6 +18,8 @@
     .btn.success{background:#10b981;}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
     .card{background:#fff;padding:12px;border-radius:10px;border:1px solid #e6ecf2}
+    .card.clickable{cursor:pointer;transition:transform 0.2s;}
+    .card.clickable:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.1);}
     .meta{font-size:13px;color:var(--muted);margin-bottom:8px}
     .contact-info{font-size:14px;color:#374151;margin:8px 0;}
     .actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
@@ -61,7 +63,7 @@
   <div id="loadingNotice" class="notice" style="display:none">Carregando...</div>
 </main>
 
-<footer>Serviço+ • Versão 3 — feito com ferramentas grátis</footer>
+<footer>Serviço+ • Versão 3 — Todos os Direitos Reservados 2025</footer>
 
 <!-- Modal -->
 <div id="modal" class="modal" role="dialog" aria-hidden="true">
@@ -127,11 +129,11 @@ function showLoading(show) {
   document.getElementById('loadingNotice').style.display = show ? 'block' : 'none';
 }
 
-// Buscar todos os dados da API
+// Buscar todos os dados da API (GET)
 async function fetchAll(){ 
   showLoading(true);
   try{ 
-    const r = await fetch(API_URL); 
+    const r = await fetch(API_URL); // GET por padrão
     if(!r.ok) throw new Error('HTTP '+r.status); 
     const data = await r.json(); 
     return data || []; 
@@ -140,6 +142,24 @@ async function fetchAll(){
     return null; 
   } finally {
     showLoading(false);
+  }
+}
+
+// Enviar dados (POST)
+async function submitData(payload) {
+  try {
+    const r = await fetch(API_URL, { 
+      method: 'POST', 
+      headers: {'Content-Type': 'application/json'}, 
+      body: JSON.stringify(payload) 
+    }); 
+    
+    if(!r.ok) throw new Error('HTTP '+r.status); 
+    const j = await r.json(); 
+    return { success: true, data: j };
+  } catch(e) {
+    console.error('submit error', e);
+    return { success: false, error: e.message };
   }
 }
 
@@ -204,6 +224,12 @@ async function searchAndRender(){
   renderServices(filtered);
 }
 
+// Função para pesquisar por categoria (agora clicável)
+function searchByCategory(category) {
+  document.getElementById('q').value = category;
+  searchAndRender();
+}
+
 // Mostrar todas as categorias disponíveis
 async function showCategories() {
   const all = await fetchAll(); 
@@ -217,10 +243,10 @@ async function showCategories() {
   emptyNotice.style.display = 'none';
   
   document.getElementById('resultsArea').innerHTML = cats.map(c => `
-    <div class="card" style="cursor:pointer" onclick="document.getElementById('q').value='${esc(c)}'; searchAndRender();">
+    <div class="card clickable" onclick="searchByCategory('${esc(c)}')">
       <strong>${esc(c)}</strong>
       <div class="meta">${all.filter(x => (x.Categoria || 'Outros') === c).length} serviços</div>
-      <div style="margin-top:8px;color:var(--accent);font-size:13px">Clique para ver serviços desta categoria</div>
+      <div style="margin-top:8px;color:var(--accent);font-size:13px">Clique para ver todos os serviços de ${esc(c)}</div>
     </div>
   `).join(''); 
 }
@@ -293,7 +319,18 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   msg.textContent='Enviando...'; 
   msg.className = 'notice';
   
-  const payload = { 
+  // Preparar payload - TESTAR AMBOS OS FORMATOS
+  const payload1 = { 
+    Nome: nome, 
+    Categoria: categoria, 
+    Localização: localizacao, 
+    Contacto: contacto, 
+    Descrição: descricao, 
+    WhatsApp: whatsapp, 
+    Foto_URL: foto_url 
+  };
+
+  const payload2 = { 
     nome: nome, 
     categoria: categoria, 
     localizacao: localizacao, 
@@ -301,31 +338,37 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     descricao: descricao, 
     whatsapp: whatsapp, 
     foto_url: foto_url 
-  }; 
+  };
   
-  try{ 
-    const r = await fetch(API_URL, { 
-      method: 'POST', 
-      headers: {'Content-Type': 'application/json'}, 
-      body: JSON.stringify(payload) 
-    }); 
-    
-    if(!r.ok) throw new Error('HTTP '+r.status); 
-    const j = await r.json(); 
-    
+  // Tentar primeiro com maiúsculas, depois com minúsculas
+  let result = await submitData(payload1);
+  
+  if (!result.success) {
+    // Se falhar, tentar com minúsculas
+    result = await submitData(payload2);
+  }
+  
+  if (result.success) {
     msg.textContent = '✅ Enviado com sucesso!'; 
     msg.className = 'notice success';
+    
+    // Limpar formulário após sucesso
+    document.getElementById('nome').value = '';
+    document.getElementById('categoria').value = '';
+    document.getElementById('localizacao').value = '';
+    document.getElementById('contacto').value = '';
+    document.getElementById('whatsapp').value = '';
+    document.getElementById('descricao').value = '';
+    document.getElementById('foto_url').value = '';
     
     setTimeout(() => { 
       modal.classList.remove('show'); 
       msg.style.display = 'none'; 
-    }, 1500); 
-    
-  }catch(e){ 
-    console.error('submit error',e); 
-    msg.innerHTML = '❌ Falha ao enviar. Tente novamente.'; 
+    }, 2000); 
+  } else {
+    msg.innerHTML = '❌ Falha ao enviar. Verifique a conexão e tente novamente.'; 
     msg.className = 'notice error';
-  } 
+  }
 }); 
 
 // Event Listeners
@@ -346,10 +389,14 @@ document.getElementById('catsBtn').addEventListener('click', showCategories);
 document.getElementById('testBtn').addEventListener('click', async () => { 
   try{ 
     const r = await fetch(API_URL); 
-    if(r.ok) alert('✅ API conectada com sucesso!'); 
-    else alert('❌ API retornou status '+r.status); 
+    if(r.ok) {
+      const data = await r.json();
+      alert(`✅ API GET funcionando!\nEncontrados ${data.length} registros.`); 
+    } else {
+      alert('❌ API retornou status '+r.status); 
+    }
   }catch(e){ 
-    alert('❌ Erro ao conectar com API'); 
+    alert('❌ Erro ao conectar com API: ' + e.message); 
   } 
 }); 
 
